@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单摆模拟器 - Week 05</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #1a1a24;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            border-radius: 8px;
+        }
+        .info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #8888aa;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        .info span {
+            color: #66ddff;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div class="info">
+        <div>摆长 L: <span>200 px</span></div>
+        <div>重力 g: <span>9.8 m/s²</span></div>
+        <div>初始角度: <span>45°</span></div>
+    </div>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = 800;
+        canvas.height = 600;
+
+        const pivotX = canvas.width / 2;
+        const pivotY = 120;
+
+        const L = 200;
+        const g = 9.8;
+        const damping = 0.998;
+
+        let theta = Math.PI / 4;
+        let omega = 0;
+
+        const dt = 0.03;
+
+        function update() {
+            const alpha = -(g / L) * Math.sin(theta);
+            omega += alpha * dt;
+            omega *= damping;
+            theta += omega * dt;
+        }
+
+        function draw() {
+            ctx.fillStyle = '#1a1a24';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const bobX = pivotX + L * Math.sin(theta);
+            const bobY = pivotY + L * Math.cos(theta);
+
+            ctx.strokeStyle = '#555577';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(pivotX, pivotY);
+            ctx.lineTo(bobX, bobY);
+            ctx.stroke();
+
+            ctx.fillStyle = '#444466';
+            ctx.beginPath();
+            ctx.arc(pivotX, pivotY, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            const gradient = ctx.createRadialGradient(bobX, bobY, 0, bobX, bobY, 30);
+            gradient.addColorStop(0, 'rgba(100, 220, 255, 0.8)');
+            gradient.addColorStop(0.5, 'rgba(60, 150, 220, 0.4)');
+            gradient.addColorStop(1, 'rgba(30, 80, 150, 0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(bobX, bobY, 30, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#66ddff';
+            ctx.shadowColor = '#66ddff';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(bobX, bobY, 14, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            const angleDeg = (theta * 180 / Math.PI).toFixed(1);
+            ctx.fillStyle = '#8888aa';
+            ctx.font = '14px Segoe UI';
+            ctx.fillText(`当前角度: ${angleDeg}°`, canvas.width - 160, 30);
+        }
+
+        function animate() {
+            update();
+            draw();
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
