@@ -13,15 +13,17 @@
         body {
             background: #1a1a24;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             min-height: 100vh;
             font-family: 'Segoe UI', sans-serif;
-            overflow: hidden;
+            overflow-y: auto;
+            padding-bottom: 40px;
         }
         canvas {
             display: block;
             border-radius: 8px;
+            margin-top: 20px;
         }
         .info {
             position: absolute;
@@ -34,14 +36,82 @@
         .info span {
             color: #66ddff;
         }
+        .controls {
+            margin-top: 24px;
+            display: flex;
+            gap: 32px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .control-group label {
+            color: #8888aa;
+            font-size: 13px;
+        }
+        .control-group label span {
+            color: #66ddff;
+            font-weight: bold;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 160px;
+            height: 6px;
+            border-radius: 3px;
+            background: #2a2a3a;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #66ddff;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(102, 221, 255, 0.5);
+        }
+        .btn-reset {
+            padding: 10px 24px;
+            background: transparent;
+            border: 1px solid #66ddff;
+            color: #66ddff;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-reset:hover {
+            background: #66ddff;
+            color: #1a1a24;
+        }
     </style>
 </head>
 <body>
     <canvas id="canvas"></canvas>
     <div class="info">
-        <div>摆长 L: <span>200 px</span></div>
-        <div>重力 g: <span>9.8 m/s²</span></div>
+        <div>摆长 L: <span id="infoL">200 px</span></div>
+        <div>重力 g: <span id="infoG">9.8 m/s²</span></div>
         <div>初始角度: <span>45°</span></div>
+    </div>
+    <div class="controls">
+        <div class="control-group">
+            <label>摆长 L: <span id="valL">200</span> px</label>
+            <input type="range" id="sliderL" min="100" max="350" value="200" step="1">
+        </div>
+        <div class="control-group">
+            <label>重力 g: <span id="valG">9.8</span></label>
+            <input type="range" id="sliderG" min="1" max="25" value="9.8" step="0.1">
+        </div>
+        <div class="control-group">
+            <label>阻尼: <span id="valD">0.002</span></label>
+            <input type="range" id="sliderD" min="0" max="0.010" value="0.002" step="0.001">
+        </div>
+        <button class="btn-reset" id="btnReset">重置摆动</button>
     </div>
     <script>
         const canvas = document.getElementById('canvas');
@@ -53,14 +123,47 @@
         const pivotX = canvas.width / 2;
         const pivotY = 120;
 
-        const L = 200;
-        const g = 9.8;
-        const damping = 0.998;
+        let L = 200;
+        let g = 9.8;
+        let damping = 0.998;
 
         let theta = Math.PI / 4;
         let omega = 0;
 
         const dt = 0.03;
+        const INITIAL_ANGLE = Math.PI / 4;
+
+        const sliderL = document.getElementById('sliderL');
+        const sliderG = document.getElementById('sliderG');
+        const sliderD = document.getElementById('sliderD');
+        const valL = document.getElementById('valL');
+        const valG = document.getElementById('valG');
+        const valD = document.getElementById('valD');
+        const infoL = document.getElementById('infoL');
+        const infoG = document.getElementById('infoG');
+        const btnReset = document.getElementById('btnReset');
+
+        sliderL.addEventListener('input', () => {
+            L = Number(sliderL.value);
+            valL.textContent = L;
+            infoL.textContent = L + ' px';
+        });
+
+        sliderG.addEventListener('input', () => {
+            g = Number(sliderG.value);
+            valG.textContent = g.toFixed(1);
+            infoG.textContent = g.toFixed(1) + ' m/s²';
+        });
+
+        sliderD.addEventListener('input', () => {
+            damping = 1 - Number(sliderD.value);
+            valD.textContent = Number(sliderD.value).toFixed(3);
+        });
+
+        btnReset.addEventListener('click', () => {
+            theta = INITIAL_ANGLE;
+            omega = 0;
+        });
 
         function update() {
             const alpha = -(g / L) * Math.sin(theta);
